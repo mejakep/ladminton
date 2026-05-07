@@ -1,0 +1,12 @@
+services:
+  flaskapp:
+    build: .
+    ports:
+      - "5000:8000"
+    volumes:
+      - sqlite-data:/data
+    restart: unless-stopped
+    environment:
+      - DB_PATH=/data/app.db
+volumes:
+  sqlite-data:

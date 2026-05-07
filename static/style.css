@@ -1,0 +1,21 @@
+.score-table {
+    table-layout: fixed;
+}
+
+.score-table td,
+.score-table th {
+    vertical-align: middle;
+}
+
+.score-cell {
+    text-align: center;
+    font-weight: bold;
+    white-space: nowrap;
+    font-size: 1.25rem;
+}
+
+.player-cell {
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
