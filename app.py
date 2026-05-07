@@ -6,7 +6,6 @@ import os
 
 DB_PATH = os.environ.get("DB_PATH", "/data/app.db")
 
-app = Flask(__name__)
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -32,74 +31,80 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Static Pages
+def create_app():
+    app = Flask(__name__)
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+    init_db()
 
-# REST API
+    # Static Pages
 
-@app.route("/api/scores", methods=["GET"])
-def get_scores():
-    conn = get_db()
+    @app.route("/")
+    def index():
+        return render_template("index.html")
 
-    start_timestamp = int(datetime.now().replace(
-        hour=0,
-        minute=0,
-        second=0,
-        microsecond=0
-    ).timestamp())
+    # REST API
 
+    @app.route("/api/scores", methods=["GET"])
+    def get_scores():
+        conn = get_db()
 
-    rows = conn.execute(
-        """
-        SELECT *
-        FROM scores
-        WHERE timestamp >= ?
-        ORDER BY id DESC
-        """,
-        (start_timestamp,)
-    ).fetchall()
-
-    conn.close()
-
-    scores = [dict(row) for row in rows]
-
-    return jsonify(scores)
+        start_timestamp = int(datetime.now().replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0
+        ).timestamp())
 
 
-@app.route("/api/scores", methods=["POST"])
-def add_score():
-    data = request.json
+        rows = conn.execute(
+            """
+            SELECT *
+            FROM scores
+            WHERE timestamp >= ?
+            ORDER BY id DESC
+            """,
+            (start_timestamp,)
+        ).fetchall()
 
-    curtain_players = data.get("curtain_players")
-    door_players = data.get("door_players")
-    curtain_score = data.get("curtain_score")
-    door_score = data.get("door_score")
-    notes = data.get("notes")
+        conn.close()
 
-    if notes is not None:
-        notes = notes.strip()
+        scores = [dict(row) for row in rows]
 
-    if notes == "":
-        notes = None
+        return jsonify(scores)
 
-    if not all([curtain_players, door_players, curtain_score is not None, door_score is not None]):
-        return jsonify({"error": "Missing at least one required input"}), 400
 
-    conn = get_db()
+    @app.route("/api/scores", methods=["POST"])
+    def add_score():
+        data = request.json
 
-    conn.execute(
-        "INSERT INTO scores (timestamp, curtain_players, door_players, curtain_score, door_score, notes) VALUES (?, ?, ?, ?, ?, ?)",
-        (int(time.time()), curtain_players, door_players, curtain_score, door_score, notes)
-    )
+        curtain_players = data.get("curtain_players")
+        door_players = data.get("door_players")
+        curtain_score = data.get("curtain_score")
+        door_score = data.get("door_score")
+        notes = data.get("notes")
 
-    conn.commit()
-    conn.close()
+        if notes is not None:
+            notes = notes.strip()
 
-    return jsonify({"success": True})
+        if notes == "":
+            notes = None
 
+        if not all([curtain_players, door_players, curtain_score is not None, door_score is not None]):
+            return jsonify({"error": "Missing at least one required input"}), 400
+
+        conn = get_db()
+
+        conn.execute(
+            "INSERT INTO scores (timestamp, curtain_players, door_players, curtain_score, door_score, notes) VALUES (?, ?, ?, ?, ?, ?)",
+            (int(time.time()), curtain_players, door_players, curtain_score, door_score, notes)
+        )
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({"success": True})
+
+    return app
 
 
 
